@@ -1,0 +1,13 @@
+fileFormatVersion: 2
+guid: 0485f7c7af9911e44b20203fc3f689ec
+timeCreated: 1452440531
+licenseType: Free
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences:
+  - Logo_SAVE_IT: {fileID: 2800000, guid: 1fb4c70835bf3024283f5ebf80708308, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
