@@ -26,10 +26,15 @@ public class PushableObject : SkinableObject {
         transform.position = MoveToPos;
         defaultPos = MoveToPos;
     }
-    public override void ValueChanged(object sender, object value)
+    public override void ValueChanged(object sender, object value, bool AddToUndoList)
     {
         if (sender.ToString() == "System.Single Weight")
         {
+            //Set value in undo handler
+            if (AddToUndoList)
+                UndoHandlerWebGL.instance.OnValueChanged<float>(gameObject, Weight, float.Parse(value.ToString()), sender);
+
+            //Set value
             Weight = float.Parse(value.ToString());
             UpdateWeight();
         }

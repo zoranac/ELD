@@ -165,11 +165,30 @@ public class FanScript : ObjectRequiresConnection {
             obj.GetComponent<Rigidbody2D>().AddForce((vect * 4 * dist * ((float)dotTile.Power / 8)), ForceMode2D.Force);
         }
     }
-    public override void ValueChanged(object sender, object value)
+    public override void ValueChanged(object sender, object value, bool AddToUndoList)
     {
         if (sender.ToString() == "FacingDirection Direction")
         {
+            int dirValue = 0;
+            switch (Direction)
+	        {
+		    case FacingDirection.Up:dirValue = 0;
+             break;
+            case FacingDirection.Down:dirValue = 1;
+             break;
+            case FacingDirection.Left:dirValue = 2;
+             break;
+            case FacingDirection.Right:dirValue = 3;
+             break;
+            default:
+             break;
+	        }
 
+            //Set value in undo handler
+            if (AddToUndoList)
+                UndoHandlerWebGL.instance.OnValueChanged<int>(gameObject, dirValue, int.Parse(value.ToString()), sender);
+
+            //Set value
             switch (int.Parse(value.ToString()))
             {
                 case 0: Direction = FacingDirection.Up;

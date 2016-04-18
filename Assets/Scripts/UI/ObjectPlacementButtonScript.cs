@@ -60,9 +60,11 @@ public class ObjectPlacementButtonScript : MonoBehaviour {
         }
 	}
 	public void ButtonPress(){
+        Control.RemoveCopying();
         if (setTool != ControlScript.Tool.None)
         {
             ControlScript.CurrentTool = setTool;
+            
         }
         else
         {
@@ -70,7 +72,9 @@ public class ObjectPlacementButtonScript : MonoBehaviour {
             ControlScript.CurrentTool = setTool;
         }
         if (ControlScript.CurrentMode == ControlScript.Mode.Build && PlaceObject != null)
+        {
             Control.skinUI.GetComponent<SkinUI>().DisplaySkins();
+        }
 	}
 
 }

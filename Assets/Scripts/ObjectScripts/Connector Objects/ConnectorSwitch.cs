@@ -149,13 +149,18 @@ public class ConnectorSwitch : TempPowerOutput {
 			}
 		}
 	}
-	public override void ValueChanged(object sender, object value)
+	public override void ValueChanged(object sender, object value, bool AddToUndoList)
 	{
 		//System.Boolean
 		//System.Int32
 		//System.Decimal
 		if (sender.ToString() == "System.Boolean SwitchState")
 		{
+            //Set value in undo handler
+            if(AddToUndoList)
+                UndoHandlerWebGL.instance.OnValueChanged<bool>(gameObject, SwitchState, bool.Parse(value.ToString()), sender);
+
+            //Set value
 			SwitchState = bool.Parse(value.ToString());
             if (connectedObject != null)
             {
@@ -174,6 +179,11 @@ public class ConnectorSwitch : TempPowerOutput {
 		}
 		if (sender.ToString() == "System.Int32 powerOutput")
 		{
+            //Set value in undo handler
+            if (AddToUndoList)
+                UndoHandlerWebGL.instance.OnValueChanged<int>(gameObject, powerOutput, int.Parse(value.ToString()), sender);
+
+            //Set value
 			powerOutput = int.Parse(value.ToString());
 			if (SwitchState)
 			{

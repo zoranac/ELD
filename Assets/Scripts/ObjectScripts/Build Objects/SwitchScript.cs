@@ -34,6 +34,15 @@ public class SwitchScript : InteractableObject {
         }
         defaultOn = On;
     }
+    public override void SetActive(bool value)
+    {
+        if (Connected)
+        {
+            GetComponentInChildren<ConnectorSwitch>().dotTile.GetComponent<DotTileScript>().ObjectOnMe = null;
+            GetComponentInChildren<ConnectorSwitch>().dotTile.GetComponent<DotTileScript>().ObjectUnderMe = null;
+        }
+        base.SetActive(value);
+    }
     public void TestIfConnected(bool setOn)
     {
         Connected = false;
@@ -55,6 +64,14 @@ public class SwitchScript : InteractableObject {
     void Update()
     {
         TestIfConnected(false);
+        if (On)
+        {
+            GetComponent<SpriteRenderer>().sprite = CurrentSkin.AllSpritesInSkin[0];
+        }
+        else
+        {
+            GetComponent<SpriteRenderer>().sprite = CurrentSkin.AllSpritesInSkin[1];
+        }
         if (!Connected)
         {
             if (ControlScript.CurrentMode == ControlScript.Mode.Connect)
@@ -71,10 +88,15 @@ public class SwitchScript : InteractableObject {
 	{
 		On = !On;
 	}
-    public override void ValueChanged(object sender, object value)
+    public override void ValueChanged(object sender, object value, bool AddToUndoList)
     {
         if (sender.ToString() == "System.Boolean On")
         {
+            //Set value in undo handler
+            if (AddToUndoList)
+                UndoHandlerWebGL.instance.OnValueChanged<bool>(gameObject, On, bool.Parse(value.ToString()),sender);
+
+            //Set Value
             On = bool.Parse(value.ToString());
         }
     }

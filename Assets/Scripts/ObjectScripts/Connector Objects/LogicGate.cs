@@ -402,10 +402,15 @@ public class LogicGate : TempPowerOutput {
             GetComponent<SpriteRenderer>().sprite = SpritesOff[3];
         }
     }
-	public override void ValueChanged(object sender, object value)
+    public override void ValueChanged(object sender, object value, bool AddToUndoList)
 	{
         if (sender.ToString() == "System.Int32 powerOutput")
 		{
+            //Set value in undo handler
+            if(AddToUndoList)
+                UndoHandlerWebGL.instance.OnValueChanged<int>(gameObject, powerOutput, int.Parse(value.ToString()), sender);
+
+            //Set value
 			powerOutput = int.Parse(value.ToString());
 			if (GateOpen)
 			{
@@ -418,6 +423,31 @@ public class LogicGate : TempPowerOutput {
         print(sender.ToString());
         if (sender.ToString() == "LogicGate+GateType gateType")
         {
+            //Set value in undo handler
+            int gateint = 0;
+            switch (gateType)
+            {
+                case GateType.AND: gateint = 0;
+                    break;
+                case GateType.OR: gateint = 1;
+                    break;
+                case GateType.XOR: gateint = 2;
+                    break;
+                case GateType.NOT: gateint = 3;
+                    break;
+                case GateType.NAND: gateint = 4;
+                    break;
+                case GateType.NOR: gateint = 5;
+                    break;
+                case GateType.XNOR: gateint = 6;
+                    break;
+                default:
+                    break;
+            }
+            if(AddToUndoList)
+                UndoHandlerWebGL.instance.OnValueChanged<int>(gameObject, gateint, int.Parse(value.ToString()), sender);
+
+            //Set value
             switch (int.Parse(value.ToString()))
             {
                 case 0: gateType = GateType.AND;

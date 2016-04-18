@@ -189,10 +189,15 @@ public class Comparator : TempPowerOutput {
         }
     }
 
-    public override void ValueChanged(object sender, object value)
+    public override void ValueChanged(object sender, object value, bool AddToUndoList)
     {
         if (sender.ToString() == "System.Int32 powerOutput")
         {
+            //Set value in undo handler
+            if (AddToUndoList)
+                UndoHandlerWebGL.instance.OnValueChanged<int>(gameObject, powerOutput, int.Parse(value.ToString()), sender);
+
+            //Set value
             powerOutput = int.Parse(value.ToString());
             if (powerOutputs)
             {
@@ -205,6 +210,46 @@ public class Comparator : TempPowerOutput {
         print(sender.ToString());
         if (sender.ToString() == "IOObject+Direction GreaterPowerInput")
         {
+            //Set value in undo handler
+            int gpi = -1;
+            switch (GreaterPowerInput)
+            {
+                case Direction.Up: gpi = 0;
+                    break;
+                case Direction.Down:
+                    if (inputUP && inputDOWN)
+                        gpi = 1;
+                    else if (inputDOWN)
+                        gpi = 0;
+                    break;
+                case Direction.Left:
+                    if (inputUP && inputDOWN && inputLEFT)
+                        gpi = 2;
+                    else if ((inputUP || inputDOWN) && inputLEFT)
+                        gpi = 1;
+                    else if (inputLEFT)
+                        gpi = 0;
+                    break;
+                case Direction.Right:
+                    if (inputUP && inputDOWN && inputLEFT && inputRIGHT)
+                        gpi = 3;
+                    else if (((inputUP && inputDOWN) || (inputUP && inputLEFT) || (inputDOWN && inputLEFT)) && inputRIGHT)
+                        gpi = 2;
+                    else if ((inputUP || inputDOWN || inputLEFT) && inputRIGHT)
+                        gpi = 1;
+                    else if (inputRIGHT)
+                        gpi = 0;
+                    break;
+                default:
+                    break;
+            }
+            if (gpi != -1)
+            {
+                if(AddToUndoList)
+                    UndoHandlerWebGL.instance.OnValueChanged<int>(gameObject, gpi, int.Parse(value.ToString()), sender); 
+            }
+
+            //Set value
             greaterPowerInputSet = true;
             switch (int.Parse(value.ToString()))
             {

@@ -84,11 +84,16 @@ public class PowerDelay : TempPowerOutput {
             }
         }
     }
-    public override void ValueChanged(object sender, object value)
+    public override void ValueChanged(object sender, object value, bool AddToUndoList)
     {
 
         if (sender.ToString() == "System.Int32 powerOutput")
         {
+            //Set value in undo handler
+            if(AddToUndoList)
+                UndoHandlerWebGL.instance.OnValueChanged<int>(gameObject, powerOutput, int.Parse(value.ToString()), sender);
+
+            //Set value
             powerOutput = int.Parse(value.ToString());
             foreach (GameObject obj in Outputs)
             {
@@ -98,6 +103,11 @@ public class PowerDelay : TempPowerOutput {
 
         if (sender.ToString() == "System.Single DelayAmount")
         {
+            //Set value in undo handler
+            if(AddToUndoList)
+                UndoHandlerWebGL.instance.OnValueChanged<float>(gameObject, DelayAmount, float.Parse(value.ToString()), sender);
+
+            //Set value
             DelayAmount = float.Parse(value.ToString());
         }
     }

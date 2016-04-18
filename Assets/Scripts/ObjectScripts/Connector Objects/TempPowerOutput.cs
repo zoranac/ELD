@@ -5,22 +5,43 @@ using System.Collections.Generic;
 public class TempPowerOutput : IOObject
 {
 	[Editable(true)]
-	public int powerOutput;
+	public int powerOutput = PowerOutput.MaxPower;
 
 	public int tempPowerOutput;
     public int lastPowerOutput;
     public bool PowerReset = false;
     public int resetWaitFrames = 0;
 	// Use this for initialization
-	void Start () {
+    public void Awake()
+    {
+        powerOutput = PowerOutput.MaxPower;
+    }
+    public void Start()
+    {
 		tempPowerOutput = 0;
         SetDotTile();
         Move(gameObject.transform.position);
         HideDotTile();
         control = GameObject.Find("Control").GetComponent<ControlScript>();
-        powerOutput = PowerOutput.MaxPower;
-
 	}
+    public void OnEnabled()
+    {
+        SetDotTile();
+    }
+    public override void SetActive(bool value)
+    {
+        if (!value)
+        {
+            RemoveFromDotTile();
+
+        }
+        else
+        {
+
+        }
+        gameObject.SetActive(value);
+        print("activate");
+    }
     //Resets the power of the outputs and inputs for MaxPower frames and turns off the power of the object. This is to do a total refresh of power (erases powered "memory")
 	public void ResetPower(){
         if (powerOutput > 0)
@@ -40,6 +61,12 @@ public class TempPowerOutput : IOObject
             resetWaitFrames = PowerOutput.MaxPower + 1;
         }
 	}
+    public void RemoveFromDotTile()
+    {
+        ShowDotTile();
+        dotTile.GetComponent<DotTileScript>().ObjectOnMe = null;
+        ResetConnectionPower();
+    }
     public void DestroyMe()
     {
         ShowDotTile();
@@ -56,10 +83,16 @@ public class TempPowerOutput : IOObject
         }
     }
     //For Object Editor
-    public override void ValueChanged(object sender, object value)
+    public override void ValueChanged(object sender, object value, bool AddToUndoList)
     {
         if (sender.ToString() == "System.Int32 powerOutput")
         {
+            //Set value in undo handler
+            if (AddToUndoList)
+            {
+                UndoHandlerWebGL.instance.OnValueChanged<int>(gameObject, powerOutput, int.Parse(value.ToString()), sender);
+            }
+            //Set value
             powerOutput = int.Parse(value.ToString());
         }
     }

@@ -20,6 +20,8 @@ public class ControlScript : MonoBehaviour {
 
     static public Tool CurrentTool = Tool.Select;
     static public Mode CurrentMode = Mode.Build;
+    public GameObject SelectedHighlight;
+    public GameObject CopyingHighlight;
     GameObject player;
 	public Vector3 PlayerStartPos;
 	public GameObject DrawObject;
@@ -30,45 +32,68 @@ public class ControlScript : MonoBehaviour {
     public GameObject ObjectPlacementButton;
     public GameObject canvas;
     public GameObject skinUI;
+    public GameObject FindUI;
+    public GameObject ButtonsDisabledOnPlay;
 	public float PlayModeZoom;
 	Mode lastMode = Mode.Build;
-	GameObject editModeButton;
-	GameObject eraseButton;
 	Vector3 posBeforePlay;
 	float zoomBeforePlay;
 	GameObject drawObjBeforePlay;
     GameObject objectEditor;
-    GameObject moveButton;
-    GameObject selectButton;
-    MySaveGame savedGame = new MySaveGame();
 	// Use this for initialization
 	void Start () {
+        CopyingHighlight.SetActive(false);
+        SelectedHighlight.SetActive(false);
         Application.targetFrameRate = 60;
 		Screen.fullScreen = false;
         player = GameObject.Find("Player");
+        player.transform.position = PlayerStartPos;
         PlayerStartPos = player.transform.position;
         objectEditor = GameObject.Find("ObjectEditor");
 		CreateGUIButtons();
-		editModeButton = GameObject.Find("EditModeButton");
-		eraseButton = GameObject.Find("EraseButton");
-        moveButton = GameObject.Find("MoveButton");
-        selectButton = GameObject.Find("SelectButton");
-        if (savedGame == null)
-        {
-            savedGame = new MySaveGame();
-        }
         foreach (GameObject obj in PlaceableObjs)
         {
-            print(obj.name);
             obj.GetComponent<SkinableObject>().SetSkin(obj.GetComponent<SkinableObject>().Skins[0]);
         }
+    }
+    public void SetSelected(GameObject obj)
+    {
+        SelectedHighlight.SetActive(true);
+        SelectedHighlight.transform.position = new Vector3(obj.transform.position.x, obj.transform.position.y, SelectedHighlight.transform.position.z);
+        objectEditor.GetComponent<ObjectEditor>().SetSelectedObject(obj);
+    }
+    public void SetSelected(Vector3 v)
+    {
+        SelectedHighlight.transform.position = v;
+    }
+    public void RemoveSelected()
+    {
+        SelectedHighlight.SetActive(false);
+        objectEditor.GetComponent<ObjectEditor>().SetSelectedObject(null);
+    }
+    public void SetCopying(GameObject obj)
+    {
+        CopyingHighlight.SetActive(true);
+        CopyingHighlight.transform.position = new Vector3(obj.transform.position.x,obj.transform.position.y,CopyingHighlight.transform.position.z);
+        DrawObject = obj;
+        CurrentTool = Tool.None;
+    }
+    public void SetCopying(Vector3 v)
+    {
+        CopyingHighlight.transform.position = v;
+    }
+    public void RemoveCopying()
+    {
+        CopyingHighlight.SetActive(false);
+        DrawObject = null;
     }
 	void CreateGUIButtons(){
 
         BuildGUI.transform.FindChild("Viewport").FindChild("Content").GetComponent<RectTransform>().sizeDelta =
-            new Vector2(BuildGUI.transform.FindChild("Viewport").FindChild("Content").GetComponent<RectTransform>().sizeDelta.x, (ObjectPlacementButton.GetComponent<RectTransform>().sizeDelta.y * PlaceableObjs.Count)+Screen.height/8);
-        float y = BuildGUI.transform.FindChild("Viewport").FindChild("Content").GetComponent<RectTransform>().position.y - ObjectPlacementButton.GetComponent<RectTransform>().sizeDelta.y;
-        float x = ObjectPlacementButton.GetComponent<RectTransform>().sizeDelta.x / 1.75f;
+            new Vector2(BuildGUI.transform.FindChild("Viewport").FindChild("Content").GetComponent<RectTransform>().sizeDelta.x, ((ObjectPlacementButton.GetComponent<RectTransform>().sizeDelta.y +4) * PlaceableObjs.Count)+Screen.height/8);
+        float y = (BuildGUI.transform.FindChild("frame").GetComponent<RectTransform>().rect.height*1.75f) * ((float)Screen.height / 768);
+        float x = (BuildGUI.transform.FindChild("frame").GetComponent<RectTransform>().rect.width/2.25f) * ((float)Screen.width / 1024);
+        BuildGUI.transform.FindChild("Scrollbar Vertical").GetComponent<Scrollbar>().value = 1;
 		//Build GUI
         foreach (GameObject obj in PlaceableObjs)
         {
@@ -83,11 +108,13 @@ public class ControlScript : MonoBehaviour {
         }
 
         ConnectionGUI.transform.FindChild("Viewport").FindChild("Content").GetComponent<RectTransform>().sizeDelta =
-            new Vector2(ConnectionGUI.transform.FindChild("Viewport").FindChild("Content").GetComponent<RectTransform>().sizeDelta.x, (ObjectPlacementButton.GetComponent<RectTransform>().sizeDelta.y * ConnectionObjs.Count)+Screen.height/8);
+            new Vector2(ConnectionGUI.transform.FindChild("Viewport").FindChild("Content").GetComponent<RectTransform>().sizeDelta.x, ((ObjectPlacementButton.GetComponent<RectTransform>().sizeDelta.y + 4) * PlaceableObjs.Count) + Screen.height / 8);
 
 		//Connect GUI
-        y = BuildGUI.transform.FindChild("Viewport").FindChild("Content").GetComponent<RectTransform>().position.y - ObjectPlacementButton.GetComponent<RectTransform>().sizeDelta.y;
-        x = ObjectPlacementButton.GetComponent<RectTransform>().sizeDelta.x/1.75f;
+        y = (BuildGUI.transform.FindChild("frame").GetComponent<RectTransform>().rect.height * 1.75f) * ((float)Screen.height / 768);
+        x = (BuildGUI.transform.FindChild("frame").GetComponent<RectTransform>().rect.width / 2.25f) * ((float)Screen.width / 1024);
+        ConnectionGUI.transform.FindChild("Scrollbar Vertical").GetComponent<Scrollbar>().value = 1;
+
 		foreach (GameObject obj in ConnectionObjs)
 		{
 			GameObject tempButton = Instantiate(ObjectPlacementButton);
@@ -100,12 +127,12 @@ public class ControlScript : MonoBehaviour {
 			y -= 25/ (400/(float)Screen.height);
 		}
 
-    
-
 		ConnectionGUI.SetActive(false);
 	}
     public void ChangeModeBetweenPlaceAndEdit()
     {
+        RemoveSelected();
+        RemoveCopying();
         //setup for build mode
         if (CurrentMode == Mode.Connect)
         {
@@ -150,6 +177,9 @@ public class ControlScript : MonoBehaviour {
         //Set Up for Play mode
 		if (CurrentMode != Mode.Play)
 		{
+            FindUI.GetComponent<InputField>().text = "";
+            FindUI.SetActive(false);
+            ButtonsDisabledOnPlay.SetActive(false);
             player.SetActive(true);
             player.transform.position = PlayerStartPos;
             player.transform.rotation = Quaternion.identity;
@@ -159,13 +189,9 @@ public class ControlScript : MonoBehaviour {
 			zoomBeforePlay = Camera.main.orthographicSize;
 			Camera.main.orthographicSize = PlayModeZoom;
 			DrawObject = null;
-			editModeButton.SetActive(false);
-			eraseButton.SetActive(false);
 			BuildGUI.SetActive(false);
 			ConnectionGUI.SetActive(false);
             objectEditor.SetActive(false);
-            selectButton.SetActive(false);
-            moveButton.SetActive(false);
             setDefaultOnSwitches();
 			lastMode = CurrentMode;
         	CurrentMode = Mode.Play;
@@ -173,15 +199,15 @@ public class ControlScript : MonoBehaviour {
 		}
         //Set up for leaving play mode
 		else{
+            FindUI.SetActive(true);
+            ButtonsDisabledOnPlay.SetActive(true);
 			player.transform.position = PlayerStartPos;
             player.transform.rotation = Quaternion.identity;
             resetPushableObjects();
-			eraseButton.SetActive(true);
 			DrawObject = drawObjBeforePlay;
 			CurrentMode = lastMode;
 			Camera.main.transform.position = posBeforePlay;
 			Camera.main.orthographicSize = zoomBeforePlay;
-			editModeButton.SetActive(true);
 			if (CurrentMode == Mode.Connect)
 			{
 				ConnectionGUI.SetActive(true);
@@ -195,8 +221,6 @@ public class ControlScript : MonoBehaviour {
 			}
             resetSwitches();
             objectEditor.SetActive(true);
-            selectButton.SetActive(true);
-            moveButton.SetActive(true);
             ChangeConnectionObjectVisability();
 		}
 		
@@ -320,31 +344,4 @@ public class ControlScript : MonoBehaviour {
 		}
 		return goList.ToArray();
 	}
-	// Update is called once per frame
-	void Update () {
-
-	}
-    public void SaveGame()
-    {
-        savedGame.Objects.Clear();
-        foreach(PlaceableObject obj in GameObject.FindObjectsOfType<PlaceableObject>())
-        {
-            savedGame.Objects.Add(obj.gameObject);
-        }
-        foreach (PowerLineScript obj in GameObject.FindObjectsOfType<PowerLineScript>())
-        {
-            savedGame.Objects.Add(obj.gameObject);
-        }
-        SaveGameSystem.SaveGame(savedGame, "MySaveGame");
-       
-    }
-    public void LoadGame()
-    {
-        MySaveGame savedGame2 = SaveGameSystem.LoadGame("MySaveGame") as MySaveGame;
-        print(savedGame2);
-        foreach (GameObject obj in savedGame2.Objects)
-        {
-            Instantiate(obj);
-        }
-    }
 }

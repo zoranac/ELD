@@ -385,28 +385,50 @@ public class PowerLineScript : MonoBehaviour {
 		lineRenderer.SetVertexCount(indexPos-1);
 		indexPos--;
 	}
-	public void DestroyMe(){
-		foreach(GameObject obj in ConnectedDots)
-		{
-			obj.GetComponent<DotTileScript>().PowerSourceObj = null;
-			if (obj.GetComponent<DotTileScript>().ObjectOnMe != null && 
-			    obj.GetComponent<DotTileScript>().ObjectOnMe.GetComponent<IOObject>() != null)
-			{
+    public void SetActive(bool value)
+    {
+        if (value)
+        {
+            foreach (GameObject obj in ConnectedDots)
+            {
+                obj.GetComponent<DotTileScript>().Connections.Add(gameObject);
+            }
+        }
+        else
+        {
+            DestroyMeSetUp();
+        }
+        gameObject.SetActive(value);
+
+    }
+    public void DestroyMeSetUp()
+    {
+        foreach (GameObject obj in ConnectedDots)
+        {
+            obj.GetComponent<DotTileScript>().PowerSourceObj = null;
+            if (obj.GetComponent<DotTileScript>().ObjectOnMe != null &&
+                obj.GetComponent<DotTileScript>().ObjectOnMe.GetComponent<IOObject>() != null)
+            {
                 if (obj.GetComponent<DotTileScript>().ObjectOnMe.GetComponent<TempPowerOutput>() != null)
                 {
                     obj.GetComponent<DotTileScript>().ObjectOnMe.GetComponent<TempPowerOutput>().ResetConnectionPower();
                 }
-				obj.GetComponent<DotTileScript>().ObjectOnMe.GetComponent<IOObject>().Inputs.Remove(gameObject);
-				obj.GetComponent<DotTileScript>().ObjectOnMe.GetComponent<IOObject>().Outputs.Remove(gameObject);
-			}
-           
-			obj.GetComponent<DotTileScript>().Connections.Remove(gameObject);
-		}
+                obj.GetComponent<DotTileScript>().ObjectOnMe.GetComponent<IOObject>().Inputs.Remove(gameObject);
+                obj.GetComponent<DotTileScript>().ObjectOnMe.GetComponent<IOObject>().Outputs.Remove(gameObject);
+            }
+
+            obj.GetComponent<DotTileScript>().Connections.Remove(gameObject);
+        }
+        gameObject.SetActive(false);
+    }
+	public void DestroyMe(){
+        DestroyMeSetUp();
 		Destroy(gameObject);
 	}
 	public void OnTriggerEnter2D(Collider2D col){
 		if (col.tag == gameObject.tag && col.gameObject != gameObject){
-			DestroyMe();
+            DestroyMeSetUp();
+            UndoHandlerWebGL.instance.OnErased<Vector3>(gameObject);
 		}
 	}
 }

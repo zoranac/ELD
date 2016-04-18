@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using UnityEngine.SceneManagement;
 public class SaveLoadHandler : MonoBehaviour {
     string MainPathTo_Save_Load;
     public List<GameObject> All_Instantiated_ObjectsToSave_Load;
@@ -16,6 +17,7 @@ public class SaveLoadHandler : MonoBehaviour {
     public GameObject SaveUI;
     public GameObject LoadUI;
     public GameObject LoadSaveButton;
+    AsyncOperation async;
     void Awake()
     {
         foreach(GameObject obj in GameObject.FindGameObjectsWithTag("SaveLoadHandler"))
@@ -67,7 +69,7 @@ public class SaveLoadHandler : MonoBehaviour {
                 //Load();
             }
         }
-        if (Loading && !Application.isLoadingLevel)
+        if (Loading && async.isDone)
         {
             Load();
         }
@@ -75,7 +77,7 @@ public class SaveLoadHandler : MonoBehaviour {
     public void StartLoad()
     {
         Loading = true;
-        Application.LoadLevel(Application.loadedLevel);
+        async = SceneManager.LoadSceneAsync("Test");
     }
     public void Cancel()
     {
@@ -253,11 +255,11 @@ public class SaveLoadHandler : MonoBehaviour {
 
                                 i++;
                             }
-                            foreach (FieldInfo f in editableFields)
-                            {
-                                EditableObject tempObject = obj.GetComponent<EditableObject>();
+                            //foreach (FieldInfo f in editableFields)
+                            //{
+                            //    EditableObject tempObject = obj.GetComponent<EditableObject>();
 
-                            }
+                            //}
                         }
                     }
                 }

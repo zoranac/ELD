@@ -12,11 +12,11 @@ public class RestartUI : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-        if (!player.active && !restartUI.active && ControlScript.CurrentMode == ControlScript.Mode.Play)
+        if (!player.activeSelf && !restartUI.activeSelf && ControlScript.CurrentMode == ControlScript.Mode.Play)
         {
             restartUI.SetActive(true);
         }
-        if (restartUI.active && ControlScript.CurrentMode != ControlScript.Mode.Play)
+        if (restartUI.activeSelf && ControlScript.CurrentMode != ControlScript.Mode.Play)
         {
             restartUI.SetActive(false);
         }

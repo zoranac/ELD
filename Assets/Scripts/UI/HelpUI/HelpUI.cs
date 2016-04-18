@@ -49,5 +49,6 @@ public class HelpUI : MonoBehaviour {
     public void HideHelpUI()
     {
         gameObject.SetActive(false);
+        ControlScript.CurrentTool = ControlScript.Tool.None;
     }
 }

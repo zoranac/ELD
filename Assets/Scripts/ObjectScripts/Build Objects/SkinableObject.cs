@@ -5,7 +5,7 @@ public class SkinableObject : EditableObject {
 
     public List<Skin> Skins = new List<Skin>();
     public Skin CurrentSkin;
-    public override void ValueChanged(object field, object value)
+    public override void ValueChanged(object field, object value, bool AddToUndoList)
     {
 
     }

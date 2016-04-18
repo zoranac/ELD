@@ -4,17 +4,7 @@ using System.Reflection;
 
 public abstract class EditableObject : PlaceableObject{
 
-	// Use this for initialization
-	void Start () {
-	
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
-
-	public abstract void ValueChanged(object field, object value);
+	public abstract void ValueChanged(object field, object value, bool addToUndoList);
 
     public override void Move(Vector3 MoveToPos)
     {

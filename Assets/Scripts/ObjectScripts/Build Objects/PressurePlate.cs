@@ -10,20 +10,42 @@ public class PressurePlate : ObjectRequiresConnection
     {
 
         TestIfCovered();
-
+     
+        if (On)
+        {
+            GetComponent<SpriteRenderer>().sprite = CurrentSkin.AllSpritesInSkin[1];
+        }
+        else
+        {
+            GetComponent<SpriteRenderer>().sprite = CurrentSkin.AllSpritesInSkin[0];
+        }
     }
     void TestIfCovered()
     {
-        On = false;
-        foreach (Collider2D col in Physics2D.OverlapAreaAll(transform.position + new Vector3(.225f, .225f), transform.position + new Vector3(-.225f, -.225f)))
+ 
+        if (!dotTile.Powered)
         {
-            if (col.GetComponent<PushableObject>() != null || col.tag == "Player")
-            {
-                On = true;
-                break;
-            }
+            dotTile.Blocked = true;
+            return;
         }
+     
         dotTile.Blocked = !On;
+    }
+    void OnTriggerStay2D(Collider2D col)
+    {
+        if (col.GetComponent<PushableObject>() != null || col.tag == "Player")
+        {
+            print("ASDASD");
+            On = true;
+        }
+    }
+    void OnTriggerExit2D(Collider2D col)
+    {
+        if (col.GetComponent<PushableObject>() != null || col.tag == "Player")
+        {
+            print("ASDASD");
+            On = false;
+        }
     }
 
 }

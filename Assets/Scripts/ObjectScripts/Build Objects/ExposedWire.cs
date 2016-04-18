@@ -8,6 +8,14 @@ public class ExposedWire : ObjectRequiresConnection {
 	// Update is called once per frame
 	void Update () {
         TestIfBlocked();
+        if (blocked)
+        {
+            GetComponent<SpriteRenderer>().sprite = CurrentSkin.AllSpritesInSkin[0];
+        }
+        else
+        {
+            GetComponent<SpriteRenderer>().sprite = CurrentSkin.AllSpritesInSkin[1];
+        }
 	}
     void TestIfBlocked()
     {

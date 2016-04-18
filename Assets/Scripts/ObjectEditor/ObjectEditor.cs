@@ -66,6 +66,18 @@ public class ObjectEditor : MonoBehaviour {
 	public void SetSelectedObject(GameObject obj){
 
 		SelectedObject = obj;
+        if (obj == null)
+        {
+            NameObj.GetComponent<Text>().text = "";
+            foreach (GameObject uiObj in UIObjects)
+            {
+                Destroy(uiObj);
+            }
+            UIObjects.Clear();
+            components.Clear();
+            editableFields.Clear();
+            return;
+        }
         NameObj.GetComponent<Text>().text = SelectedObject.name;
 		foreach(GameObject uiObj in UIObjects){
 			Destroy(uiObj);
@@ -113,7 +125,7 @@ public class ObjectEditor : MonoBehaviour {
 				Temp.GetComponentInChildren<Text>().text = f.Name;
 				object temp = info.GetValue(components[0]);
 				Temp.GetComponent<Toggle>().isOn = (bool)temp;
-				Temp.GetComponent<Toggle>().onValueChanged.AddListener(delegate {tempObject.ValueChanged(info,Temp.GetComponent<Toggle>().isOn);});	
+                Temp.GetComponent<Toggle>().onValueChanged.AddListener(delegate { tempObject.ValueChanged(info, Temp.GetComponent<Toggle>().isOn, true); });	
 				UIObjects.Add(Temp);
 				i++;
 				print("bool");
@@ -129,7 +141,7 @@ public class ObjectEditor : MonoBehaviour {
 				Temp.GetComponent<Slider>().wholeNumbers = true;
 				object temp = info.GetValue(components[0]);
 				Temp.GetComponent<Slider>().value = (int)temp;
-				Temp.GetComponent<Slider>().onValueChanged.AddListener(delegate {tempObject.ValueChanged(info,Temp.GetComponent<Slider>().value);});
+				Temp.GetComponent<Slider>().onValueChanged.AddListener(delegate {tempObject.ValueChanged(info,Temp.GetComponent<Slider>().value,true);});
 				UIObjects.Add(Temp);
 				i++;
 				print("int");
@@ -145,7 +157,7 @@ public class ObjectEditor : MonoBehaviour {
                 Temp.GetComponent<Slider>().wholeNumbers = false;
                 object temp = info.GetValue(components[0]);
                 Temp.GetComponent<Slider>().value = (float)temp;
-                Temp.GetComponent<Slider>().onValueChanged.AddListener(delegate { tempObject.ValueChanged(info, Temp.GetComponent<Slider>().value); });
+                Temp.GetComponent<Slider>().onValueChanged.AddListener(delegate { tempObject.ValueChanged(info, Temp.GetComponent<Slider>().value, true); });
                 UIObjects.Add(Temp);
                 i++;
 				print("float");
@@ -165,7 +177,7 @@ public class ObjectEditor : MonoBehaviour {
                 if (f.GameObjectName.GetComponent<Comparator>() != null && f.GameObjectName.GetComponent<Comparator>().inputRIGHT)
                     Temp.GetComponent<Dropdown>().options.Add(new Dropdown.OptionData("Right"));
                 Temp.GetComponent<Dropdown>().value = 0;
-                Temp.GetComponent<Dropdown>().onValueChanged.AddListener(delegate { tempObject.ValueChanged(info, Temp.GetComponent<Dropdown>().value); });
+                Temp.GetComponent<Dropdown>().onValueChanged.AddListener(delegate { tempObject.ValueChanged(info, Temp.GetComponent<Dropdown>().value, true); });
                 UIObjects.Add(Temp);
                 i++;
             }
@@ -180,7 +192,7 @@ public class ObjectEditor : MonoBehaviour {
                 Temp.GetComponent<Dropdown>().options.Add(new Dropdown.OptionData("Left"));
                 Temp.GetComponent<Dropdown>().options.Add(new Dropdown.OptionData("Right"));
                 Temp.GetComponent<Dropdown>().value = 0;
-                Temp.GetComponent<Dropdown>().onValueChanged.AddListener(delegate { tempObject.ValueChanged(info, Temp.GetComponent<Dropdown>().value); });
+                Temp.GetComponent<Dropdown>().onValueChanged.AddListener(delegate { tempObject.ValueChanged(info, Temp.GetComponent<Dropdown>().value, true); });
                 UIObjects.Add(Temp);
                 i++;
             }
@@ -198,7 +210,7 @@ public class ObjectEditor : MonoBehaviour {
                 Temp.GetComponent<Dropdown>().options.Add(new Dropdown.OptionData("NOR"));
                 Temp.GetComponent<Dropdown>().options.Add(new Dropdown.OptionData("XNOR"));
                 Temp.GetComponent<Dropdown>().value = 0;
-                Temp.GetComponent<Dropdown>().onValueChanged.AddListener(delegate { tempObject.ValueChanged(info, Temp.GetComponent<Dropdown>().value); });
+                Temp.GetComponent<Dropdown>().onValueChanged.AddListener(delegate { tempObject.ValueChanged(info, Temp.GetComponent<Dropdown>().value, true); });
                 UIObjects.Add(Temp);
                 i++;
             }
@@ -212,6 +224,7 @@ public class ObjectEditor : MonoBehaviour {
             foreach (GameObject obj in UIObjects)
             {
                 object temp = info.GetValue(components[0]);
+                
                 if (obj.GetComponent<Slider>() != null && (temp is int || temp is float))
                 {
                     try

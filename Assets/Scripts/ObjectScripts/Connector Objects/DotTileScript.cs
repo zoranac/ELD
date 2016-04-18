@@ -74,23 +74,24 @@ public class DotTileScript : MonoBehaviour {
 	}
 	// Update is called once per frame
 	void Update () {
-        if (!Blocked)
+       
+        if (Connections.Count > 0 || ObjectOnMe != null)
         {
-            if (Connections.Count > 0 || ObjectOnMe != null)
+            TestIfPowered();
+        }
+        else if (sr.color != TestColor)
+        {
+            sr.color = TestColor;
+            Powered = false;
+            Power = 0;
+            if (ControlScript.CurrentMode != ControlScript.Mode.Connect)
             {
-                TestIfPowered();
-            }
-            else if (sr.color != TestColor)
-            {
-                sr.color = TestColor;
-                Powered = false;
-                Power = 0;
+                sr.enabled = false;
             }
         }
-        else
+        if (Blocked)
         {
             Power = 0;
-            Powered = false;
             PowerSourceObj = null;
         }
 
@@ -101,16 +102,16 @@ public class DotTileScript : MonoBehaviour {
         }
         if (ControlScript.CurrentMode == ControlScript.Mode.Connect)
         {
-             if (ObjectUnderMe != null && !ConnectionRing.active)
+             if (ObjectUnderMe != null && !ConnectionRing.activeSelf)
              {
                  ConnectionRing.SetActive(true);
              }
-             else if (ObjectUnderMe == null && ConnectionRing.active)
+             else if (ObjectUnderMe == null && ConnectionRing.activeSelf)
              {
                  ConnectionRing.SetActive(false);
              }
         }
-        else if (ConnectionRing.active)
+        else if (ConnectionRing.activeSelf)
         {
             ConnectionRing.SetActive(false);
         }

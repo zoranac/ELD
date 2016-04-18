@@ -16,6 +16,25 @@ public class CameraMovement : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
+        if (ControlScript.CurrentMode != ControlScript.Mode.Play)
+        {
+            if (transform.position.x > 15)
+            {
+                transform.position = new Vector3(15, transform.position.y, transform.position.z);
+            }
+            if (transform.position.x < -15)
+            {
+                transform.position = new Vector3(-15, transform.position.y, transform.position.z);
+            }
+            if (transform.position.y > 15)
+            {
+                transform.position = new Vector3(transform.position.x, 15, transform.position.z);
+            }
+            if (transform.position.y < -15)
+            {
+                transform.position = new Vector3(transform.position.x, -15, transform.position.z);
+            }
+        }
         if (Input.GetMouseButtonDown(2))
         {
             lastclickPos = Input.mousePosition;

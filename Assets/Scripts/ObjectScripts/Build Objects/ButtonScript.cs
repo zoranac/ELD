@@ -12,6 +12,14 @@ public class ButtonScript : SwitchScript
     void Update()
     {
         TestIfConnected(false);
+        if (On)
+        {
+            GetComponent<SpriteRenderer>().sprite = CurrentSkin.AllSpritesInSkin[1];
+        }
+        else
+        {
+            GetComponent<SpriteRenderer>().sprite = CurrentSkin.AllSpritesInSkin[0];
+        }
         if (!Connected)
         {
             if (ControlScript.CurrentMode == ControlScript.Mode.Connect)
@@ -29,13 +37,22 @@ public class ButtonScript : SwitchScript
             On = false;
         }
     }
+    public override void SetActive(bool value)
+    {
+        base.SetActive(value);
+        if (Connected)
+        {
+            GetComponentInChildren<ConnectorSwitch>().dotTile.GetComponent<DotTileScript>().ObjectOnMe = null;
+            GetComponentInChildren<ConnectorSwitch>().dotTile.GetComponent<DotTileScript>().ObjectUnderMe = null;
+        }
+    }
     override public void Interact()
     {
         On = true;
         buttonPressedTime = Time.time;
         print("ButtonInteract");
     }
-    public override void ValueChanged(object sender, object value)
+    public override void ValueChanged(object sender, object value, bool AddToUndoList)
     {
         
         if (sender.ToString() == "System.Boolean On")
@@ -46,6 +63,8 @@ public class ButtonScript : SwitchScript
         if (sender.ToString() == "System.Single WaitTime")
         {
             print(sender.ToString());
+            if (AddToUndoList)
+                UndoHandlerWebGL.instance.OnValueChanged<float>(gameObject, WaitTime, float.Parse(value.ToString()), sender);
             WaitTime = float.Parse(value.ToString());
         }
     }

@@ -35,6 +35,36 @@ public class MouseScript : MonoBehaviour {
 
 	// Update is called once per frame
 	void Update () {
+        transform.position = Camera.main.ScreenToWorldPoint(Input.mousePosition) - new Vector3(-.3f,.3f,-.75f);
+        
+        if (ControlScript.CurrentMode != ControlScript.Mode.Play)
+        {
+            if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)))
+            {
+                if (Input.GetKeyDown(KeyCode.C))
+                {
+                    SetCopying();
+                }
+                else if (Input.GetKeyDown(KeyCode.Z))
+                {
+                    UndoHandlerWebGL.instance.Undo();
+                }
+                else if (Input.GetKeyDown(KeyCode.Y))
+                {
+                    UndoHandlerWebGL.instance.Redo();
+                }
+                else if (Input.GetKeyDown(KeyCode.M))
+                {
+                    ControlScript.CurrentTool = ControlScript.Tool.Move;
+                }
+                else if (Input.GetKeyDown(KeyCode.H))
+                {
+                    ControlScript.CurrentTool = ControlScript.Tool.Help;
+                }
+            }
+        }
+
+
         Cursor.SetCursor(MouseIcons[0], Vector2.zero, CursorMode.Auto);
         if (((Input.mousePosition.x < 0 +buffer || Input.mousePosition.x > Screen.width - buffer) 
 		    || (Input.mousePosition.y < 0 +buffer || Input.mousePosition.y > Screen.height - buffer)) && !Skip){
@@ -66,7 +96,7 @@ public class MouseScript : MonoBehaviour {
                     mouseButtonDownTime = Time.time;
                 }
 
-                if ((Input.GetMouseButton(0) || Input.GetMouseButtonUp(0)) && Time.time >= mouseButtonDownTime + 1f)
+                if ((Input.GetMouseButton(0) || Input.GetMouseButtonUp(0)) && Time.time >= mouseButtonDownTime + 1f && TestMove() != null)
                 {
                     MoveObjectInstantPickUp();
                     //ControlScript.CurrentTool = ControlScript.Tool.Move;
@@ -149,7 +179,7 @@ public class MouseScript : MonoBehaviour {
         }
 
 
-        if (!HelpUIObject.active && ControlScript.CurrentMode != ControlScript.Mode.Play)
+        if (!HelpUIObject.activeSelf && ControlScript.CurrentMode != ControlScript.Mode.Play)
         {
             if (Input.GetAxis("Mouse ScrollWheel") < 0) // back
             {
@@ -172,6 +202,16 @@ public class MouseScript : MonoBehaviour {
                 Cursor.SetCursor(MouseIcons[3], Vector2.zero, CursorMode.Auto);
             }
         }
+        if (control.DrawObject == null)
+            GetComponent<SpriteRenderer>().sprite = null;
+        else if (control.DrawObject.GetComponent<SpriteRenderer>() != null)
+            GetComponent<SpriteRenderer>().sprite = control.DrawObject.GetComponent<SpriteRenderer>().sprite;
+        else
+            GetComponent<SpriteRenderer>().sprite = null;
+    }
+    public void SetCopying()
+    {
+        control.SetCopying(objectEditor.GetComponent<ObjectEditor>().SelectedObject);
     }
     bool UnmovedMouseTest()
     {
@@ -228,6 +268,19 @@ public class MouseScript : MonoBehaviour {
             }
         }
     }
+    Collider2D TestMove()
+    {
+        foreach (Collider2D col in Physics2D.OverlapPointAll(Camera.main.ScreenToWorldPoint(Input.mousePosition)))
+        {
+            if ((col.gameObject.layer == 8 && ControlScript.CurrentMode == ControlScript.Mode.Build) ||
+                (col.gameObject.layer == 10 && ControlScript.CurrentMode == ControlScript.Mode.Connect ||
+                col.tag == "Player"))
+            {
+                return col;
+            }
+        }
+        return null;
+    }
     void MoveObject()
     {
         if (MoveGameObject.GetComponent<MoveObjectScript>().MoveObject == null)
@@ -240,18 +293,13 @@ public class MouseScript : MonoBehaviour {
         }
         if (Input.GetMouseButtonDown(0) && MoveGameObject.GetComponent<MoveObjectScript>().MoveObject == null)
         {
-			foreach (Collider2D col in Physics2D.OverlapPointAll(Camera.main.ScreenToWorldPoint(Input.mousePosition)))
-			{
-                if ((col.gameObject.layer == 8 && ControlScript.CurrentMode == ControlScript.Mode.Build) ||
-                    (col.gameObject.layer == 10 && ControlScript.CurrentMode == ControlScript.Mode.Connect ||
-                    col.tag == "Player"))
-				{
-					MoveGameObject.GetComponent<MoveObjectScript>().SetMoveObject(col.gameObject);
-                    Color color = col.gameObject.GetComponent<SpriteRenderer>().color;
-                    col.gameObject.GetComponent<SpriteRenderer>().color = new Color(color.r, color.g, color.b, color.a / 2);
-				}
-			}
-           
+            Collider2D col = TestMove();
+            if (col != null)
+            {
+                MoveGameObject.GetComponent<MoveObjectScript>().SetMoveObject(col.gameObject);
+                Color color = col.gameObject.GetComponent<SpriteRenderer>().color;
+                col.gameObject.GetComponent<SpriteRenderer>().color = new Color(color.r, color.g, color.b, color.a / 2);
+            }
         }
         else if (Input.GetMouseButtonDown(0) && MoveGameObject.GetComponent<MoveObjectScript>().MoveObject != null)
 		{
@@ -285,6 +333,15 @@ public class MouseScript : MonoBehaviour {
             if (obj != null)
             {
                 Vector3 v = new Vector3(obj.transform.position.x, obj.transform.position.y, MoveGameObject.GetComponent<MoveObjectScript>().MoveObject.transform.position.z);
+                UndoHandlerWebGL.instance.AddMoveAction<Vector3>(MoveGameObject, MoveGameObject.transform.position, v);
+                if ((Vector2)MoveGameObject.GetComponent<MoveObjectScript>().MoveObject.transform.position == (Vector2)control.SelectedHighlight.transform.position)
+                {
+                    control.SetSelected(v);
+                }
+                if ((Vector2)MoveGameObject.GetComponent<MoveObjectScript>().MoveObject.transform.position == (Vector2)control.CopyingHighlight.transform.position)
+                {
+                    control.SetCopying(v);
+                }
                 if (MoveGameObject.GetComponent<MoveObjectScript>().MoveObject.tag == "Player")
                 {
                     control.PlayerStartPos = v;
@@ -352,6 +409,15 @@ public class MouseScript : MonoBehaviour {
             if (obj != null)
             {
                 Vector3 v = new Vector3(obj.transform.position.x, obj.transform.position.y, MoveGameObject.GetComponent<MoveObjectScript>().MoveObject.transform.position.z);
+                UndoHandlerWebGL.instance.AddMoveAction<Vector3>(MoveGameObject, MoveGameObject.transform.position, v);
+                if ((Vector2)MoveGameObject.GetComponent<MoveObjectScript>().MoveObject.transform.position == (Vector2)control.SelectedHighlight.transform.position)
+                {
+                    control.SetSelected(v);
+                }
+                if ((Vector2)MoveGameObject.GetComponent<MoveObjectScript>().MoveObject.transform.position == (Vector2)control.CopyingHighlight.transform.position)
+                {
+                    control.SetCopying(v);
+                }
                 if (MoveGameObject.GetComponent<MoveObjectScript>().MoveObject.tag == "Player")
                 {
                     control.PlayerStartPos = v;
@@ -391,7 +457,9 @@ public class MouseScript : MonoBehaviour {
 			{
                 if ((col.gameObject.layer == 8 && ControlScript.CurrentMode == ControlScript.Mode.Build) ||
                     (col.gameObject.layer == 10 && ControlScript.CurrentMode == ControlScript.Mode.Connect))
-					objectEditor.GetComponent<ObjectEditor>().SetSelectedObject(col.gameObject);
+                {
+                    control.SetSelected(col.gameObject);
+                }
 			}
 		}
 	}
@@ -412,16 +480,19 @@ public class MouseScript : MonoBehaviour {
 			{
 				if (obj.collider.gameObject.tag == "DotTile")
                 {
+                    //Select Object if there is an object there
                     if (obj.collider.GetComponent<DotTileScript>().ObjectOnMe != null)
                     {
                         SelectObject();
                     }
 					int count = 0;
+
 					if (tempPowerLine != null)
 					{
 						if (tempPowerLine.GetComponent<PowerLineScript>().ConnectedDots.Count > 0)
 							count = tempPowerLine.GetComponent<PowerLineScript>().ConnectedDots.Count;
 					}
+                    //start placing powerline
                     if (!PlacingPowerline)
                     {
                         GameObject temp = (GameObject)Instantiate(PowerLine, new Vector3(obj.transform.position.x, obj.transform.position.y, -1), Quaternion.identity);
@@ -450,10 +521,14 @@ public class MouseScript : MonoBehaviour {
 						{
 							tempPowerLine.GetComponent<PowerLineScript>().ConnectedDots.Add(obj.collider.gameObject);
                             tempPowerLine.GetComponent<PowerLineScript>().SetLinePos(new Vector3(obj.transform.position.x, obj.transform.position.y, -1));
+                            
 							//add connection for the other dotTile
 							obj.collider.GetComponent<DotTileScript>().Connections.Add(tempPowerLine);
 							//Enable Collision on PowerLine
 							tempPowerLine.GetComponent<BoxCollider2D>().enabled = true;
+                            //Add to undo handler
+                            //UndoHandler.AddPlaceAction<Vector3>(tempPowerLine);
+                            UndoHandlerWebGL.instance.OnPlaced<Vector3>(tempPowerLine);
 							//start new connection at last connection's ending point
 							GameObject temp = (GameObject)Instantiate(PowerLine, new Vector3(obj.transform.position.x, obj.transform.position.y,-1),  Quaternion.identity);
                             temp.name = PowerLine.name.Replace("(Clone)", "");
@@ -540,11 +615,19 @@ public class MouseScript : MonoBehaviour {
             }
             if (instantiate)
             {
-                GameObject tempObj = (GameObject)Instantiate(CreateObj, new Vector3(Obj.transform.position.x, Obj.transform.position.y, 0), Obj.transform.rotation) as GameObject;
-                tempObj.name = tempObj.name.Replace("(Clone)", "");
-                if (GameObject.Find("SkinUI") != null)
+                if (CreateObj != null)
                 {
-                    GameObject.Find("SkinUI").GetComponent<SkinUI>().HideSkins();
+                    GameObject tempObj = (GameObject)Instantiate(CreateObj, new Vector3(Obj.transform.position.x, Obj.transform.position.y, 0), Obj.transform.rotation) as GameObject;
+                    tempObj.name = tempObj.name.Replace("(Clone)", "");
+                    if (GameObject.Find("SkinUI") != null)
+                    {
+                        GameObject.Find("SkinUI").GetComponent<SkinUI>().HideSkins();
+                    }
+                    //Add to undo handler
+                    //UndoHandler.instance.AddPlaceAction<Vector3>(tempObj);
+                    UndoHandlerWebGL.instance.OnPlaced<Vector3>(tempObj);
+                    //set as selected obj
+                    control.SetSelected(tempObj);
                 }
             }
         }
@@ -570,6 +653,10 @@ public class MouseScript : MonoBehaviour {
                         {
                             if (obj2.collider.gameObject.layer == 8)
                             {
+                                //Add to undo handler
+                                //UndoHandler.instance.AddEraseAction<Vector3>(obj2.collider.gameObject, obj2.transform.position);
+                                UndoHandlerWebGL.instance.OnErased<Vector3>(obj2.collider.gameObject);
+
                                 destroyObj = obj2;
                             }
                         }
@@ -578,12 +665,24 @@ public class MouseScript : MonoBehaviour {
 			}
             if (destroyObj.collider != null)
             {
+                if ((Vector2)destroyObj.transform.position == (Vector2)control.SelectedHighlight.transform.position)
+                {
+                    control.RemoveSelected();
+                }
+                if ((Vector2)destroyObj.transform.position == (Vector2)control.CopyingHighlight.transform.position)
+                {
+                    control.RemoveCopying();
+                }
                 if (destroyObj.collider.GetComponent<ObjectRequiresConnection>())
                 {
                     destroyObj.collider.GetComponent<ObjectRequiresConnection>().dotTile.Blocked = false;
                     destroyObj.collider.GetComponent<ObjectRequiresConnection>().dotTile.ObjectUnderMe = null;
                 }
-                Destroy(destroyObj.collider.gameObject);
+                //IF actually destroy
+                //Destroy(destroyObj.collider.gameObject);
+                
+                //temp hide in case of undo
+                destroyObj.collider.gameObject.GetComponent<PlaceableObject>().SetActive(false);
             }
 		}
 	}
@@ -608,6 +707,9 @@ public class MouseScript : MonoBehaviour {
 						{
 							if (obj2.collider.gameObject.layer == 10)
 							{
+                                //Add to undo handler
+                                //UndoHandler.instance.AddEraseAction<Vector3>(obj2.collider.gameObject, obj2.transform.position);
+                                UndoHandlerWebGL.instance.OnErased<Vector3>(obj2.collider.gameObject);
 								destroyObj = obj2;
 							}
 						}
@@ -617,20 +719,45 @@ public class MouseScript : MonoBehaviour {
 				{
                     if (Input.GetMouseButton(0) || Input.GetMouseButton(1))
 					{
+                        //Add to undo handler
+                        UndoHandlerWebGL.instance.OnErased<Vector3>(obj.collider.gameObject);
+
 						destroyObj = obj;
-						destroyObj.collider.GetComponent<PowerLineScript>().DestroyMe();
+						destroyObj.collider.GetComponent<PowerLineScript>().DestroyMeSetUp();
 					}
 				}
 			}
             if (destroyObj.collider != null)
             {
+                if ((Vector2)destroyObj.transform.position == (Vector2)control.SelectedHighlight.transform.position)
+                {
+                    control.RemoveSelected();
+                }
+                if ((Vector2)destroyObj.transform.position == (Vector2)control.CopyingHighlight.transform.position)
+                {
+                    control.RemoveCopying();
+                }
                 if (destroyObj.collider.GetComponent<TempPowerOutput>() != null)
                 {
-                    destroyObj.collider.GetComponent<TempPowerOutput>().DestroyMe();
+                    //IF actually destroy
+                     //destroyObj.collider.GetComponent<TempPowerOutput>().DestroyMe();
+
+                    //temp hide in case of undo
+                    destroyObj.collider.GetComponent<TempPowerOutput>().RemoveFromDotTile();
+                    destroyObj.collider.gameObject.GetComponent<PlaceableObject>().SetActive(false);
                 }
+                else if (destroyObj.collider.GetComponent<PowerOutput>() != null)
+                {
+                    //IF actually destroy
+                    //Destroy(destroyObj.collider.gameObject);
+
+                    //temp hide in case of undo
+                    destroyObj.collider.GetComponent<PowerOutput>().RemoveFromDotTile();
+                    destroyObj.collider.gameObject.GetComponent<PlaceableObject>().SetActive(false);
+                } 
                 else
                 {
-                    Destroy(destroyObj.collider.gameObject);
+                    destroyObj.collider.gameObject.GetComponent<PlaceableObject>().SetActive(false);
                 }
             }
 		}
@@ -683,8 +810,16 @@ public class MouseScript : MonoBehaviour {
 			}
 			if (instantiate)
 			{
-                GameObject tempObj = (GameObject)Instantiate(CreateObj, new Vector3(Obj.transform.position.x, Obj.transform.position.y, -1.25f), Obj.transform.rotation) as GameObject;
-                tempObj.name = tempObj.name.Replace("(Clone)", "");
+                if (CreateObj != null)
+                {
+                    GameObject tempObj = (GameObject)Instantiate(CreateObj, new Vector3(Obj.transform.position.x, Obj.transform.position.y, -1.25f), Obj.transform.rotation) as GameObject;
+                    tempObj.name = tempObj.name.Replace("(Clone)", "");
+                    //Add to undo handler
+                    //UndoHandler.instance.AddPlaceAction<Vector3>(tempObj);
+                    UndoHandlerWebGL.instance.OnPlaced<Vector3>(tempObj);
+                    //set as selected obj
+                    control.SetSelected(tempObj);
+                }
             }
 		}
 	}

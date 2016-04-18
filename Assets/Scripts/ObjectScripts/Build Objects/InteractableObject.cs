@@ -16,7 +16,7 @@ public class InteractableObject : SkinableObject {
 	{
 
 	}
-    public override void ValueChanged(object field, object value)
+    public override void ValueChanged(object field, object value, bool AddToUndoList)
     {
 
     }

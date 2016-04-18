@@ -7,7 +7,11 @@ public class PlaceableObject : MonoBehaviour {
 	void Start () {
 	
 	}
-	
+    public virtual void SetActive(bool value)
+    {
+        gameObject.SetActive(value);
+    }
+
 	// Update is called once per frame
 	void Update () {
         //TestIfChangeOpacity();
